@@ -83,6 +83,27 @@ class UserSignUpPage extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
+                      // 📧 Email field (new)
+                      TextField(
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          hintText: 'Email',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Color(0xFF8173C3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Color(0xFF8173C3)),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
                       // 🏠 Address field
                       TextField(
                         decoration: InputDecoration(
