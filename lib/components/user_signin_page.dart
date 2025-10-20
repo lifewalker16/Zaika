@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'choose_user_widget.dart';
 import 'user_signup_page.dart';
-import 'dashboard_page.dart';
+import 'location.dart';
 
 class UserSignInPage extends StatefulWidget {
   const UserSignInPage({super.key});
@@ -35,28 +35,40 @@ class _UserSignInPageState extends State<UserSignInPage> {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
-      // Fetch user info from Firestore
+      // Fetch user info (optional)
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .get();
 
-      String userName = userDoc.get('name');
+      if (!userDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not found in Firestore')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
 
-      // Navigate to Dashboard with username
+      // ✅ Go directly to LocationScreen after successful login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (_) => DashboardPage(userName: userName)),
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Signed in successfully!')),
+        MaterialPageRoute(builder: (_) => const LocationScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Sign-in failed')),
-      );
+      String message = 'An error occurred. Please try again.';
+      if (e.code == 'user-not-found') {
+        message = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Wrong password provided.';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -88,7 +100,8 @@ class _UserSignInPageState extends State<UserSignInPage> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const ChooseUserWidget()),
+                      builder: (context) => const ChooseUserWidget(),
+                    ),
                   );
                 },
               ),
@@ -96,15 +109,25 @@ class _UserSignInPageState extends State<UserSignInPage> {
             Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 20,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 60),
-                      Image.asset('assets/images/zaika_logo.png', width: 80, height: 80),
+                      Image.asset(
+                        'assets/images/zaika_logo.png',
+                        width: 80,
+                        height: 80,
+                      ),
                       const SizedBox(height: 20),
-                      Image.asset('assets/images/zaika_text.png', width: 200, height: 50),
+                      Image.asset(
+                        'assets/images/zaika_text.png',
+                        width: 200,
+                        height: 50,
+                      ),
                       const SizedBox(height: 40),
                       TextField(
                         controller: _emailController,
@@ -153,13 +176,16 @@ class _UserSignInPageState extends State<UserSignInPage> {
                             ),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Sign in',
                                   style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600),
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                         ),
                       ),
@@ -173,7 +199,8 @@ class _UserSignInPageState extends State<UserSignInPage> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (_) => const UserSignUpPage()),
+                                  builder: (_) => const UserSignUpPage(),
+                                ),
                               );
                             },
                             child: const Text(

@@ -17,6 +17,8 @@ dependencies:
   firebase_core: ^4.2.0
   firebase_auth: ^6.1.1
   cloud_firestore: ^6.0.3
+  geolocator: ^13.0.1
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -38,7 +40,9 @@ flutter:
     - assets/images/book.jpeg
     - assets/images/menu.jpeg
     - assets/images/order.jpeg
-
-
+    - assets/images/location.png
+    - assets/images/location_icon.png
+    - assets/images/mark.png
+    - assets/images/success.jpeg
 
  
