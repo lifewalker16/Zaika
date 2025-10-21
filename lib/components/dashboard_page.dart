@@ -1,11 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'user_signin_page.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'menu_page.dart';
+import 'booking_page.dart';
+import 'feedback_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   final String userName;
 
   const DashboardPage({super.key, required this.userName});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int _selectedIndex = 0;
+
+  Widget getPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return _buildHomePage();
+      case 1:
+        return const Center(child: Text("Orders Page Coming Soon"));
+      case 2:
+        return const MenuPage();
+      case 3:
+        return const FeedbackPage();
+      case 4:
+        return const BookingPage();
+      default:
+        return _buildHomePage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,15 +44,9 @@ class DashboardPage extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            Image.asset(
-              'assets/images/zaika_logo.png',
-              height: 40,
-            ),
+            Image.asset('assets/images/zaika_logo.png', height: 40),
             const SizedBox(width: 10),
-            Image.asset(
-              'assets/images/zaika_text_purple.png',
-              height: 40,
-            ),
+            Image.asset('assets/images/zaika_text_purple.png', height: 40),
           ],
         ),
         actions: [
@@ -46,65 +68,26 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome user
-            Text(
-              'Welcome, $userName',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Hero Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/images/zaika_restaurant.jpeg',
-                height: 220,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(height: 25),
-
-            // Option Cards
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                buildOptionCard(context, 'Book', 'assets/images/book.jpeg', Colors.orange),
-                buildOptionCard(context, 'Menu', 'assets/images/menu.jpeg', Colors.green),
-                buildOptionCard(context, 'Order', 'assets/images/order.jpeg', Colors.purple),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Add more sections if needed
-          ],
-        ),
-      ),
+      body: getPage(),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
         selectedItemColor: Colors.deepPurple,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long),
             label: 'Orders',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.restaurant_menu),
-            label: 'Menu',
+            label: 'DineIN',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.feedback),
@@ -119,19 +102,101 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget buildOptionCard(BuildContext context, String title, String imagePath, Color color) {
-    return Expanded(
+  // ----------------- HOME PAGE CONTENT -----------------
+  Widget _buildHomePage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome Text
+          Text(
+            'Welcome, ${widget.userName} 👋',
+            style: GoogleFonts.poppins(
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF4A148C),
+              letterSpacing: 0.8,
+              shadows: [
+                Shadow(
+                  blurRadius: 3,
+                  color: Colors.deepPurple.withOpacity(0.3),
+                  offset: const Offset(1, 2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Hero Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              'assets/images/zaika_restaurant.jpeg',
+              height: 220,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // Option Cards
+          buildOptionCard(
+            context,
+            'Book Table',
+            'assets/images/book.jpeg',
+            Colors.orange,
+          ),
+          const SizedBox(height: 16),
+          buildOptionCard(
+            context,
+            'Dine In',
+            'assets/images/menu.jpeg',
+            Colors.green,
+          ),
+          const SizedBox(height: 16),
+          buildOptionCard(
+            context,
+            'Order Food',
+            'assets/images/order.jpeg',
+            Colors.purple,
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  // ----------------- OPTION CARD BUILDER -----------------
+  Widget buildOptionCard(
+    BuildContext context,
+    String title,
+    String imagePath,
+    Color color,
+  ) {
+    return SizedBox(
+      width: double.infinity,
       child: Card(
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         shadowColor: color.withOpacity(0.4),
         child: InkWell(
           onTap: () {
-            // TODO: Navigate to respective page
+            if (title == 'Dine In') {
+              setState(() => _selectedIndex = 2); // Navigate to MenuPage
+            } else if (title == 'Book Table') {
+              setState(() => _selectedIndex = 4); // Navigate to BookingPage
+            } else if (title == 'Order Food') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Order Food feature coming soon!'),
+                ),
+              );
+            }
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             height: 130,
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -141,27 +206,30 @@ class DashboardPage extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
                     imagePath,
-                    height: 60,
-                    width: 60,
+                    height: 80,
+                    width: 80,
                     fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
+                const Icon(Icons.arrow_forward_ios, color: Colors.white),
               ],
             ),
           ),
