@@ -7,23 +7,24 @@ class AdminDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6FF),
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        backgroundColor: const Color(0xFF8173C3),
+        title: const Text(
+          'Admin Dashboard',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF6C5DD3),
         elevation: 0,
+        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 20,
-          crossAxisSpacing: 20,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
           children: [
-            _DashboardCard(
-              icon: Icons.add_box_outlined,
+            _DashboardButton(
+              icon: Icons.add_circle,
               title: 'Add Item',
-              color: const Color(0xFF8173C3),
+              color: const Color(0xFF6C5DD3),
               onTap: () {
                 Navigator.push(
                   context,
@@ -33,12 +34,22 @@ class AdminDashboardPage extends StatelessWidget {
                 );
               },
             ),
-            _DashboardCard(
-              icon: Icons.list_alt_outlined,
+            const SizedBox(height: 20),
+            _DashboardButton(
+              icon: Icons.list_alt,
               title: 'View Items',
-              color: Colors.deepPurple.shade200,
+              color: const Color(0xFF42A5F5),
               onTap: () {
-                // TODO: View items page
+                // TODO: Navigate to View Items page
+              },
+            ),
+            const SizedBox(height: 20),
+            _DashboardButton(
+              icon: Icons.receipt_long,
+              title: 'View Orders',
+              color: const Color(0xFF26A69A),
+              onTap: () {
+                // TODO: Navigate to View Orders page
               },
             ),
           ],
@@ -48,13 +59,13 @@ class AdminDashboardPage extends StatelessWidget {
   }
 }
 
-class _DashboardCard extends StatelessWidget {
+class _DashboardButton extends StatelessWidget {
   final IconData icon;
   final String title;
   final Color color;
   final VoidCallback onTap;
 
-  const _DashboardCard({
+  const _DashboardButton({
     required this.icon,
     required this.title,
     required this.color,
@@ -63,36 +74,42 @@ class _DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: color, width: 2),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 50),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: color,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 40),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+            ],
+          ),
         ),
       ),
     );
