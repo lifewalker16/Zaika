@@ -43,15 +43,6 @@ class AdminDashboardPage extends StatelessWidget {
                 // TODO: Navigate to View Items page
               },
             ),
-            const SizedBox(height: 20),
-            _DashboardButton(
-              icon: Icons.receipt_long,
-              title: 'View Orders',
-              color: const Color(0xFF26A69A),
-              onTap: () {
-                // TODO: Navigate to View Orders page
-              },
-            ),
           ],
         ),
       ),
