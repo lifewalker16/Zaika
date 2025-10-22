@@ -13,27 +13,27 @@ class _MenuPageState extends State<MenuPage> {
 
   final Map<String, List<Map<String, dynamic>>> menuItems = {
     'Veg': [
-      {'name': 'Paneer Tikka', 'price': 120, 'calories': 250},
-      {'name': 'Veg Burger', 'price': 100, 'calories': 300},
+      {'name': 'Paneer Tikka', 'price': 120},
+      {'name': 'Veg Burger', 'price': 100},
     ],
     'Egg': [
-      {'name': 'Egg Curry', 'price': 110, 'calories': 270},
-      {'name': 'Omelette', 'price': 60, 'calories': 150},
+      {'name': 'Egg Curry', 'price': 110},
+      {'name': 'Omelette', 'price': 60},
     ],
     'Non-Veg': [
-      {'name': 'Chicken Biryani', 'price': 180, 'calories': 500},
-      {'name': 'Mutton Curry', 'price': 220, 'calories': 600},
+      {'name': 'Chicken Biryani', 'price': 180},
+      {'name': 'Mutton Curry', 'price': 220},
     ],
     'Drinks': [
-      {'name': 'Fresh Lime Soda', 'price': 60, 'calories': 240},
-      {'name': 'Mohito', 'price': 80, 'calories': 240},
-      {'name': 'Gin 60ml', 'price': 150, 'calories': 240},
-      {'name': 'Vodka 60ml', 'price': 100, 'calories': 240},
-      {'name': 'Black Label 60ml', 'price': 120, 'calories': 240},
+      {'name': 'Fresh Lime Soda', 'price': 60},
+      {'name': 'Mohito', 'price': 80},
+      {'name': 'Gin 60ml', 'price': 150},
+      {'name': 'Vodka 60ml', 'price': 100},
+      {'name': 'Black Label 60ml', 'price': 120},
     ],
     'Desert': [
-      {'name': 'Chocolate Cake', 'price': 90, 'calories': 450},
-      {'name': 'Ice Cream', 'price': 70, 'calories': 300},
+      {'name': 'Chocolate Cake', 'price': 90},
+      {'name': 'Ice Cream', 'price': 70},
     ],
   };
 
@@ -46,10 +46,10 @@ class _MenuPageState extends State<MenuPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // ❌ removes back arrow
+        automaticallyImplyLeading: false, 
         backgroundColor: const Color(0xFF625D9F),
         title: Align(
-          alignment: Alignment.centerLeft, // 🔹 align title to left
+          alignment: Alignment.centerLeft, 
           child: Text(
             'Menu',
             style: GoogleFonts.poppins(
@@ -64,8 +64,6 @@ class _MenuPageState extends State<MenuPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // 🔹 Removed the "Order will be delivered here" container
-
             // Category chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -127,17 +125,6 @@ class _MenuPageState extends State<MenuPage> {
                               Text(
                                 '₹ ${item['price']}',
                                 style: GoogleFonts.poppins(fontSize: 14),
-                              ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  const Icon(Icons.local_fire_department,
-                                      color: Colors.orange, size: 18),
-                                  Text(
-                                    "${item['calories']} cal",
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
