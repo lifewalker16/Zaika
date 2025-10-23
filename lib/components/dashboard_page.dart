@@ -24,8 +24,8 @@ class _DashboardPageState extends State<DashboardPage> {
       case 0:
         return _buildHomePage();
       case 1:
-        return const OrderPage(); // ✅ Navigate to OrderPage
-      case 2:
+        return const OrdersPage(); // ✅ Navigate to OrderPage
+        case 2:
         return const MenuPage();
       case 3:
         return const FeedbackPage();

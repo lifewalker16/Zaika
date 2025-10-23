@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BookingPage extends StatefulWidget {
   const BookingPage({super.key});
@@ -10,12 +12,11 @@ class BookingPage extends StatefulWidget {
 
 class _BookingPageState extends State<BookingPage> {
   int members = 2;
-  int hour = 2;
+  int hour = 7;
   int minute = 30;
   bool isAM = true;
   DateTime? selectedDate;
 
-  // Temporary recent booking data
   Map<String, dynamic>? recentBooking;
 
   void _selectDate() async {
@@ -28,7 +29,7 @@ class _BookingPageState extends State<BookingPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: Color(0xFF625D9F),
               onPrimary: Colors.white,
               onSurface: Colors.black87,
@@ -48,7 +49,7 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  void _confirmBooking() {
+  Future<void> _confirmBooking() async {
     if (selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select a date first.")),
@@ -56,26 +57,62 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
 
-    final booking = {
-      "members": members,
-      "date":
-          "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}",
-      "time":
-          "$hour:${minute.toString().padLeft(2, '0')} ${isAM ? "AM" : "PM"}",
-      "status": "Pending",
-    };
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please log in to make a booking.")),
+        );
+        return;
+      }
 
-    setState(() {
-      recentBooking = booking;
-    });
+      // Generate a custom booking ID
+      final bookingId =
+          "bookingId_${DateTime.now().millisecondsSinceEpoch.toString()}";
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "Booking confirmed for $members member(s) on ${booking['date']} at ${booking['time']}",
+      // Format date and time
+      final formattedDate =
+          "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+      final formattedTime =
+          "$hour:${minute.toString().padLeft(2, '0')} ${isAM ? "AM" : "PM"}";
+
+      // Create booking data map
+      final bookingData = {
+        "bookingId": bookingId,
+        "userId": user.uid,
+        "number_of_members": members,
+        "date": formattedDate,
+        "time": formattedTime,
+        "status": "Pending",
+        "timestamp": FieldValue.serverTimestamp(),
+      };
+
+      // Save to Firestore under "bookings"
+      await FirebaseFirestore.instance
+          .collection("bookings")
+          .doc(bookingId)
+          .set(bookingData);
+
+      // Update UI
+      setState(() {
+        recentBooking = bookingData;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Booking confirmed for $members member(s) on $formattedDate at $formattedTime",
+          ),
         ),
-      ),
-    );
+      );
+
+      print("✅ Booking saved with ID: $bookingId");
+    } catch (e) {
+      print("❌ Error saving booking: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to save booking: $e")));
+    }
   }
 
   @override
@@ -102,14 +139,17 @@ class _BookingPageState extends State<BookingPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Number of members
               _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Number of members",
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500, fontSize: 16)),
+                    Text(
+                      "Number of members",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -122,7 +162,9 @@ class _BookingPageState extends State<BookingPage> {
                           child: Text(
                             "$members",
                             style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         _buildIconButton(Icons.add, () {
@@ -136,14 +178,17 @@ class _BookingPageState extends State<BookingPage> {
 
               const SizedBox(height: 16),
 
-              // Time selector
               _buildCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Time",
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500, fontSize: 16)),
+                    Text(
+                      "Time",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -153,9 +198,13 @@ class _BookingPageState extends State<BookingPage> {
                             hour = (hour == 1) ? 12 : hour - 1;
                           });
                         }),
-                        Text("$hour",
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(
+                          "$hour",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const Text(" : ", style: TextStyle(fontSize: 20)),
                         _buildIconButton(Icons.remove, () {
                           setState(() {
@@ -165,7 +214,9 @@ class _BookingPageState extends State<BookingPage> {
                         Text(
                           minute.toString().padLeft(2, '0'),
                           style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         _buildIconButton(Icons.add, () {
                           setState(() {
@@ -176,18 +227,20 @@ class _BookingPageState extends State<BookingPage> {
                         ChoiceChip(
                           label: const Text("AM"),
                           selected: isAM,
-                          selectedColor: Color(0xFF625D9F),
+                          selectedColor: const Color(0xFF625D9F),
                           labelStyle: TextStyle(
-                              color: isAM ? Colors.white : Colors.black87),
+                            color: isAM ? Colors.white : Colors.black87,
+                          ),
                           onSelected: (_) => setState(() => isAM = true),
                         ),
                         const SizedBox(width: 6),
                         ChoiceChip(
                           label: const Text("PM"),
                           selected: !isAM,
-                          selectedColor: Color(0xFF625D9F),
+                          selectedColor: const Color(0xFF625D9F),
                           labelStyle: TextStyle(
-                              color: !isAM ? Colors.white : Colors.black87),
+                            color: !isAM ? Colors.white : Colors.black87,
+                          ),
                           onSelected: (_) => setState(() => isAM = false),
                         ),
                       ],
@@ -198,7 +251,6 @@ class _BookingPageState extends State<BookingPage> {
 
               const SizedBox(height: 16),
 
-              // Date picker
               InkWell(
                 onTap: _selectDate,
                 child: _buildCard(
@@ -219,7 +271,6 @@ class _BookingPageState extends State<BookingPage> {
 
               const SizedBox(height: 25),
 
-              // Confirm booking button
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -227,43 +278,53 @@ class _BookingPageState extends State<BookingPage> {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF625D9F)),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: Text(
                     "Confirm Booking",
                     style: GoogleFonts.poppins(
-                        color: const Color(0xFF625D9F),
-                        fontWeight: FontWeight.w600),
+                      color: const Color(0xFF625D9F),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 30),
 
-              // Recent Booking Section
               recentBooking != null
                   ? _buildCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Recent Booking",
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600, fontSize: 18)),
+                          Text(
+                            "Recent Booking",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           _buildBookingRow("Date:", recentBooking!['date']),
                           _buildBookingRow("Time:", recentBooking!['time']),
-                          _buildBookingRow("Status:", recentBooking!['status'],
-                              valueColor: Colors.orange[800]),
+                          _buildBookingRow(
+                            "Status:",
+                            recentBooking!['status'],
+                            valueColor: Colors.orange[800],
+                          ),
                         ],
                       ),
                     )
                   : _buildCard(
-                      color: const Color(0xFFEBE6F6), // Light purple background
+                      color: const Color(0xFFEBE6F6),
                       child: Text(
                         "No recent bookings yet.",
                         style: GoogleFonts.poppins(
-                            fontSize: 15, color: Colors.black54),
+                          fontSize: 15,
+                          color: Colors.black54,
+                        ),
                       ),
                     ),
             ],
@@ -276,7 +337,7 @@ class _BookingPageState extends State<BookingPage> {
   Widget _buildIconButton(IconData icon, VoidCallback onPressed) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF625D9F).withOpacity(0.2), // light purple
+        color: const Color(0xFF625D9F).withOpacity(0.2),
         shape: BoxShape.circle,
       ),
       child: IconButton(
@@ -291,7 +352,7 @@ class _BookingPageState extends State<BookingPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color ?? const Color(0xFF625D9F).withOpacity(0.2), // light purple
+        color: color ?? const Color(0xFF625D9F).withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -313,10 +374,13 @@ class _BookingPageState extends State<BookingPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-          Text(value,
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w500,
-                  color: valueColor ?? Colors.black87)),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w500,
+              color: valueColor ?? Colors.black87,
+            ),
+          ),
         ],
       ),
     );

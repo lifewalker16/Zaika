@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'order_page.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -9,44 +12,118 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  String selectedCategory = 'Drinks';
-
-  final Map<String, List<Map<String, dynamic>>> menuItems = {
-    'Veg': [
-      {'name': 'Paneer Tikka', 'price': 120},
-      {'name': 'Veg Burger', 'price': 100},
-    ],
-    'Egg': [
-      {'name': 'Egg Curry', 'price': 110},
-      {'name': 'Omelette', 'price': 60},
-    ],
-    'Non-Veg': [
-      {'name': 'Chicken Biryani', 'price': 180},
-      {'name': 'Mutton Curry', 'price': 220},
-    ],
-    'Drinks': [
-      {'name': 'Fresh Lime Soda', 'price': 60},
-      {'name': 'Mohito', 'price': 80},
-      {'name': 'Gin 60ml', 'price': 150},
-      {'name': 'Vodka 60ml', 'price': 100},
-      {'name': 'Black Label 60ml', 'price': 120},
-    ],
-    'Desert': [
-      {'name': 'Chocolate Cake', 'price': 90},
-      {'name': 'Ice Cream', 'price': 70},
-    ],
-  };
-
-  // store count for each item
+  String selectedCategory = 'Non-Veg';
+  List<Map<String, dynamic>> fetchedItems = [];
   Map<String, int> itemCounts = {};
-
-  // store spice level per item
   Map<String, String> itemSpiceLevels = {};
 
   @override
-  Widget build(BuildContext context) {
-    final items = menuItems[selectedCategory]!;
+  void initState() {
+    super.initState();
+    _fetchMenuItems();
+  }
 
+  Future<void> _fetchMenuItems() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('food_items').get();
+
+      List<Map<String, dynamic>> loadedItems = [];
+
+      for (var doc in querySnapshot.docs) {
+        final menuData = doc.data()['menuItems'] as Map<String, dynamic>?;
+        if (menuData != null) {
+          menuData.forEach((key, value) {
+            if (value['category'] == selectedCategory) {
+              loadedItems.add({
+                'id': key,
+                'name': value['name'],
+                'price': value['price'],
+                'image_url': value['image_url'],
+                'description': value['description'] ?? '',
+                'preparation_time': value['preparation_time'] ?? 0,
+                'category': value['category'],
+              });
+            }
+          });
+        }
+      }
+
+      setState(() {
+        fetchedItems = loadedItems;
+      });
+    } catch (e) {
+      print("🔥 Error fetching menu items: $e");
+    }
+  }
+
+  Future<void> _placeOrder() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please log in first.")),
+        );
+        return;
+      }
+
+      List<Map<String, dynamic>> orderItems = [];
+      double total = 0;
+
+      itemCounts.forEach((itemName, qty) {
+        final item = fetchedItems.firstWhere((it) => it['name'] == itemName);
+        orderItems.add({
+          'itemId': item['id'],
+          'name': item['name'],
+          'quantity': qty,
+          'price': item['price'],
+          'image_url': item['image_url'],
+          'spiceLevel': itemSpiceLevels[itemName] ?? '',
+        });
+        total += (item['price'] * qty);
+      });
+
+      if (orderItems.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No items selected.")),
+        );
+        return;
+      }
+
+      final orderId = "order_${DateTime.now().millisecondsSinceEpoch}";
+
+      final newOrder = {
+        'userId': user.uid,
+        'items': orderItems,
+        'totalAmount': total,
+        'status': 'Pending',
+        'timestamp': FieldValue.serverTimestamp(), // server timestamp
+      };
+
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .set(newOrder);
+
+      setState(() {
+        itemCounts.clear();
+        itemSpiceLevels.clear();
+      });
+
+      // Navigate to OrdersPage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OrdersPage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error placing order: $e")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -72,7 +149,7 @@ class _MenuPageState extends State<MenuPage> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['Veg', 'Egg', 'Non-Veg', 'Drinks', 'Desert']
+                children: ['Veg', 'Non-Veg', 'Drinks', 'Dessert']
                     .map(
                       (cat) => Padding(
                         padding: const EdgeInsets.only(right: 10),
@@ -81,6 +158,7 @@ class _MenuPageState extends State<MenuPage> {
                           selected: selectedCategory == cat,
                           onSelected: (_) => setState(() {
                             selectedCategory = cat;
+                            _fetchMenuItems();
                           }),
                           selectedColor: const Color(0xFF625D9F),
                           labelStyle: TextStyle(
@@ -94,97 +172,146 @@ class _MenuPageState extends State<MenuPage> {
                     .toList(),
               ),
             ),
-
             const SizedBox(height: 10),
 
-            // Menu list
+            // Menu List
             Expanded(
-              child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  final count = itemCounts[item['name']] ?? 0;
-                  final selectedSpice = itemSpiceLevels[item['name']];
+              child: fetchedItems.isEmpty
+                  ? const Center(child: Text("No items in this category."))
+                  : ListView.builder(
+                      itemCount: fetchedItems.length,
+                      itemBuilder: (context, index) {
+                        final item = fetchedItems[index];
+                        final count = itemCounts[item['name']] ?? 0;
+                        final selectedSpice = itemSpiceLevels[item['name']];
 
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    elevation: 3,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Item name and price row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item['name'],
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    '₹ ${item['price']}',
-                                    style: GoogleFonts.poppins(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                              // Add/Counter button
-                              Container(
-                                decoration: BoxDecoration(
-                                  color:
-                                      const Color(0xFF625D9F).withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                        return Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          elevation: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        item['image_url'],
+                                        width: 90,
+                                        height: 90,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item['name'],
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "₹ ${item['price']}",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            item['description'] ?? '',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+
+                                // Spice level for Veg / Non-Veg
+                                if (['Veg', 'Non-Veg'].contains(selectedCategory))
+                                  Row(
+                                    children: [
+                                      ChoiceChip(
+                                        label: const Text("Mild 🌶"),
+                                        selected: selectedSpice == "Mild",
+                                        onSelected: (_) => setState(() =>
+                                            itemSpiceLevels[item['name']] =
+                                                "Mild"),
+                                        selectedColor: Colors.orangeAccent,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ChoiceChip(
+                                        label: const Text("Medium 🌶🌶"),
+                                        selected: selectedSpice == "Medium",
+                                        onSelected: (_) => setState(() =>
+                                            itemSpiceLevels[item['name']] =
+                                                "Medium"),
+                                        selectedColor: Colors.deepOrangeAccent,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ChoiceChip(
+                                        label: const Text("Spicy 🌶🌶🌶"),
+                                        selected: selectedSpice == "Spicy",
+                                        onSelected: (_) => setState(() =>
+                                            itemSpiceLevels[item['name']] =
+                                                "Spicy"),
+                                        selectedColor: Colors.redAccent,
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(height: 10),
+
+                                // Qty buttons
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Qty:",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                     count == 0
-                                        ? TextButton(
-                                            onPressed: () {
-                                              setState(() =>
-                                                  itemCounts[item['name']] = 1);
-                                            },
-                                            style: TextButton.styleFrom(
+                                        ? ElevatedButton(
+                                            onPressed: () => setState(() =>
+                                                itemCounts[item['name']] = 1),
+                                            style: ElevatedButton.styleFrom(
                                               backgroundColor:
                                                   const Color(0xFF625D9F),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 8),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
                                             ),
-                                            child: const Text(
-                                              "Add",
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
+                                            child: const Text("Add"),
                                           )
                                         : Row(
                                             children: [
                                               IconButton(
-                                                icon:
-                                                    const Icon(Icons.remove),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    if (count > 0) {
-                                                      itemCounts[
-                                                              item['name']] =
-                                                          count - 1;
-                                                    }
-                                                  });
-                                                },
+                                                icon: const Icon(Icons.remove),
+                                                onPressed: () => setState(() {
+                                                  if (count > 1) {
+                                                    itemCounts[item['name']] =
+                                                        count - 1;
+                                                  } else {
+                                                    itemCounts
+                                                        .remove(item['name']);
+                                                  }
+                                                }),
                                               ),
                                               Text(
                                                 '$count',
@@ -194,98 +321,38 @@ class _MenuPageState extends State<MenuPage> {
                                               ),
                                               IconButton(
                                                 icon: const Icon(Icons.add),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    itemCounts[item['name']] =
-                                                        count + 1;
-                                                  });
-                                                },
+                                                onPressed: () => setState(() {
+                                                  itemCounts[item['name']] =
+                                                      count + 1;
+                                                }),
                                               ),
                                             ],
                                           ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // 🌶 Spice level (only for Veg, Egg, Non-Veg)
-                          if (['Veg', 'Egg', 'Non-Veg']
-                              .contains(selectedCategory))
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Choose Spice Level:",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text("Mild 🌶"),
-                                      selected: selectedSpice == "Mild",
-                                      onSelected: (_) => setState(() =>
-                                          itemSpiceLevels[item['name']] =
-                                              "Mild"),
-                                      selectedColor: Colors.orangeAccent,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    ChoiceChip(
-                                      label: const Text("Medium 🌶🌶"),
-                                      selected: selectedSpice == "Medium",
-                                      onSelected: (_) => setState(() =>
-                                          itemSpiceLevels[item['name']] =
-                                              "Medium"),
-                                      selectedColor: Colors.deepOrangeAccent,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    ChoiceChip(
-                                      label: const Text("Spicy 🌶🌶🌶"),
-                                      selected: selectedSpice == "Spicy",
-                                      onSelected: (_) => setState(() =>
-                                          itemSpiceLevels[item['name']] =
-                                              "Spicy"),
-                                      selectedColor: Colors.redAccent,
-                                    ),
-                                  ],
-                                ),
                               ],
                             ),
-                        ],
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
 
-            // Confirm Order button
+            // Confirm Order
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // print all selected items, counts, and spice levels
-                  for (var item in itemCounts.keys) {
-                    final count = itemCounts[item];
-                    final spice = itemSpiceLevels[item] ?? 'N/A';
-                    debugPrint('$item - Qty: $count, Spice: $spice');
-                  }
-                },
+                onPressed: _placeOrder,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFF625D9F)),
+                  backgroundColor: const Color(0xFF625D9F),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  "Confirm Meals",
-                  style: TextStyle(color: Color(0xFF625D9F)),
+                child: Text(
+                  "Confirm Order",
+                  style: GoogleFonts.poppins(
+                      color: Colors.white, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
