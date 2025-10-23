@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'admin_items.dart';
+import 'view_items.dart';
+import 'view_orders.dart';
+import 'view_bookings.dart';
+import 'view_feedback.dart'; // Import the feedback page
 
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
+
+  // Uniform professional button color
+  final Color buttonColor = const Color(0xFF8173C3); // Muted purple/indigo
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +20,7 @@ class AdminDashboardPage extends StatelessWidget {
           'Admin Dashboard',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF6C5DD3),
+        backgroundColor: buttonColor,
         elevation: 0,
         centerTitle: true,
       ),
@@ -24,7 +31,7 @@ class AdminDashboardPage extends StatelessWidget {
             _DashboardButton(
               icon: Icons.add_circle,
               title: 'Add Item',
-              color: const Color(0xFF6C5DD3),
+              color: buttonColor,
               onTap: () {
                 Navigator.push(
                   context,
@@ -38,9 +45,56 @@ class AdminDashboardPage extends StatelessWidget {
             _DashboardButton(
               icon: Icons.list_alt,
               title: 'View Items',
-              color: const Color(0xFF42A5F5),
+              color: buttonColor,
               onTap: () {
-                // TODO: Navigate to View Items page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewItemsPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            _DashboardButton(
+              icon: Icons.receipt_long,
+              title: 'View Orders',
+              color: buttonColor,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewOrdersPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            _DashboardButton(
+              icon: Icons.event_available,
+              title: 'View Bookings',
+              color: buttonColor,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewBookingsPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            _DashboardButton(
+              icon: Icons.feedback,
+              title: 'View Feedback',
+              color: buttonColor,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewFeedbackPage(), // Navigate to feedback page
+                  ),
+                );
               },
             ),
           ],
@@ -78,9 +132,9 @@ class _DashboardButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 6),
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
