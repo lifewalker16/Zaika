@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'menu_page.dart';
 import 'booking_page.dart';
 import 'feedback_page.dart';
+import 'order_page.dart'; // ✅ Import OrderPage
 
 class DashboardPage extends StatefulWidget {
   final String userName;
@@ -23,7 +24,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 0:
         return _buildHomePage();
       case 1:
-        return const Center(child: Text("Orders Page Coming Soon"));
+        return const OrderPage(); // ✅ Navigate to OrderPage
       case 2:
         return const MenuPage();
       case 3:
@@ -187,11 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
             } else if (title == 'Book Table') {
               setState(() => _selectedIndex = 4); // Navigate to BookingPage
             } else if (title == 'Order Food') {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Order Food feature coming soon!'),
-                ),
-              );
+              setState(() => _selectedIndex = 1); // ✅ Navigate to Orders
             }
           },
           borderRadius: BorderRadius.circular(16),
