@@ -3,6 +3,7 @@ import 'admin_items.dart';
 import 'view_items.dart';
 import 'view_orders.dart';
 import 'view_bookings.dart';
+import 'view_feedback.dart'; // Import the feedback page
 
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
@@ -78,6 +79,20 @@ class AdminDashboardPage extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const ViewBookingsPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            _DashboardButton(
+              icon: Icons.feedback,
+              title: 'View Feedback',
+              color: buttonColor,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ViewFeedbackPage(), // Navigate to feedback page
                   ),
                 );
               },

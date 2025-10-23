@@ -16,10 +16,6 @@ class _MenuPageState extends State<MenuPage> {
       {'name': 'Paneer Tikka', 'price': 120},
       {'name': 'Veg Burger', 'price': 100},
     ],
-    'Egg': [
-      {'name': 'Egg Curry', 'price': 110},
-      {'name': 'Omelette', 'price': 60},
-    ],
     'Non-Veg': [
       {'name': 'Chicken Biryani', 'price': 180},
       {'name': 'Mutton Curry', 'price': 220},
@@ -72,7 +68,7 @@ class _MenuPageState extends State<MenuPage> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['Veg', 'Egg', 'Non-Veg', 'Drinks', 'Desert']
+                children: ['Veg', 'Non-Veg', 'Drinks', 'Desert']
                     .map(
                       (cat) => Padding(
                         padding: const EdgeInsets.only(right: 10),
@@ -211,9 +207,8 @@ class _MenuPageState extends State<MenuPage> {
 
                           const SizedBox(height: 10),
 
-                          // 🌶 Spice level (only for Veg, Egg, Non-Veg)
-                          if (['Veg', 'Egg', 'Non-Veg']
-                              .contains(selectedCategory))
+                          // 🌶 Spice level (only for Veg, Non-Veg)
+                          if (['Veg', 'Non-Veg'].contains(selectedCategory))
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
