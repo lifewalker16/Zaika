@@ -37,7 +37,11 @@ class _MenuPageState extends State<MenuPage> {
     ],
   };
 
+  // store count for each item
   Map<String, int> itemCounts = {};
+
+  // store spice level per item
+  Map<String, String> itemSpiceLevels = {};
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +50,10 @@ class _MenuPageState extends State<MenuPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFF625D9F),
         title: Align(
-          alignment: Alignment.centerLeft, 
+          alignment: Alignment.centerLeft,
           child: Text(
             'Menu',
             style: GoogleFonts.poppins(
@@ -75,8 +79,9 @@ class _MenuPageState extends State<MenuPage> {
                         child: ChoiceChip(
                           label: Text(cat),
                           selected: selectedCategory == cat,
-                          onSelected: (_) =>
-                              setState(() => selectedCategory = cat),
+                          onSelected: (_) => setState(() {
+                            selectedCategory = cat;
+                          }),
                           selectedColor: const Color(0xFF625D9F),
                           labelStyle: TextStyle(
                             color: selectedCategory == cat
@@ -99,6 +104,7 @@ class _MenuPageState extends State<MenuPage> {
                 itemBuilder: (context, index) {
                   final item = items[index];
                   final count = itemCounts[item['name']] ?? 0;
+                  final selectedSpice = itemSpiceLevels[item['name']];
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -107,90 +113,150 @@ class _MenuPageState extends State<MenuPage> {
                     elevation: 3,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Item details
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          // Item name and price row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                item['name'],
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item['name'],
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    '₹ ${item['price']}',
+                                    style: GoogleFonts.poppins(fontSize: 14),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 5),
-                              Text(
-                                '₹ ${item['price']}',
-                                style: GoogleFonts.poppins(fontSize: 14),
+                              // Add/Counter button
+                              Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFF625D9F).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    count == 0
+                                        ? TextButton(
+                                            onPressed: () {
+                                              setState(() =>
+                                                  itemCounts[item['name']] = 1);
+                                            },
+                                            style: TextButton.styleFrom(
+                                              backgroundColor:
+                                                  const Color(0xFF625D9F),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              "Add",
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          )
+                                        : Row(
+                                            children: [
+                                              IconButton(
+                                                icon:
+                                                    const Icon(Icons.remove),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    if (count > 0) {
+                                                      itemCounts[
+                                                              item['name']] =
+                                                          count - 1;
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                              Text(
+                                                '$count',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.add),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    itemCounts[item['name']] =
+                                                        count + 1;
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
 
-                          // Counter / Add button
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF625D9F).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                          const SizedBox(height: 10),
+
+                          // 🌶 Spice level (only for Veg, Egg, Non-Veg)
+                          if (['Veg', 'Egg', 'Non-Veg']
+                              .contains(selectedCategory))
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                count == 0
-                                    ? TextButton(
-                                        onPressed: () {
-                                          setState(() =>
-                                              itemCounts[item['name']] = 1);
-                                        },
-                                        style: TextButton.styleFrom(
-                                          backgroundColor:
-                                              const Color(0xFF625D9F),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20, vertical: 8),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          "Add",
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      )
-                                    : Row(
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.remove),
-                                            onPressed: () {
-                                              setState(() {
-                                                if (count > 0) {
-                                                  itemCounts[item['name']] =
-                                                      count - 1;
-                                                }
-                                              });
-                                            },
-                                          ),
-                                          Text(
-                                            '$count',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.add),
-                                            onPressed: () {
-                                              setState(() {
-                                                itemCounts[item['name']] =
-                                                    count + 1;
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ),
+                                Text(
+                                  "Choose Spice Level:",
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    ChoiceChip(
+                                      label: const Text("Mild 🌶"),
+                                      selected: selectedSpice == "Mild",
+                                      onSelected: (_) => setState(() =>
+                                          itemSpiceLevels[item['name']] =
+                                              "Mild"),
+                                      selectedColor: Colors.orangeAccent,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ChoiceChip(
+                                      label: const Text("Medium 🌶🌶"),
+                                      selected: selectedSpice == "Medium",
+                                      onSelected: (_) => setState(() =>
+                                          itemSpiceLevels[item['name']] =
+                                              "Medium"),
+                                      selectedColor: Colors.deepOrangeAccent,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ChoiceChip(
+                                      label: const Text("Spicy 🌶🌶🌶"),
+                                      selected: selectedSpice == "Spicy",
+                                      onSelected: (_) => setState(() =>
+                                          itemSpiceLevels[item['name']] =
+                                              "Spicy"),
+                                      selectedColor: Colors.redAccent,
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -199,11 +265,18 @@ class _MenuPageState extends State<MenuPage> {
               ),
             ),
 
-            // Confirm Order
+            // Confirm Order button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // print all selected items, counts, and spice levels
+                  for (var item in itemCounts.keys) {
+                    final count = itemCounts[item];
+                    final spice = itemSpiceLevels[item] ?? 'N/A';
+                    debugPrint('$item - Qty: $count, Spice: $spice');
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: const BorderSide(color: Color(0xFF625D9F)),
