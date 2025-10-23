@@ -41,7 +41,7 @@ class OrdersPage extends StatelessWidget {
           'All Orders',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
-        backgroundColor: const Color(0xFF8173C3),
+        backgroundColor: const Color(0xFF625D9F),
         centerTitle: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
