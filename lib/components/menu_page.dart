@@ -25,8 +25,9 @@ class _MenuPageState extends State<MenuPage> {
 
   Future<void> _fetchMenuItems() async {
     try {
-      final querySnapshot =
-          await FirebaseFirestore.instance.collection('food_items').get();
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('food_items')
+          .get();
 
       List<Map<String, dynamic>> loadedItems = [];
 
@@ -61,9 +62,9 @@ class _MenuPageState extends State<MenuPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please log in first.")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Please log in first.")));
         return;
       }
 
@@ -84,9 +85,9 @@ class _MenuPageState extends State<MenuPage> {
       });
 
       if (orderItems.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No items selected.")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("No items selected.")));
         return;
       }
 
@@ -116,9 +117,9 @@ class _MenuPageState extends State<MenuPage> {
         MaterialPageRoute(builder: (context) => const OrdersPage()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error placing order: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error placing order: $e")));
     }
   }
 
@@ -245,33 +246,39 @@ class _MenuPageState extends State<MenuPage> {
                                 const SizedBox(height: 10),
 
                                 // Spice level for Veg / Non-Veg
-                                if (['Veg', 'Non-Veg'].contains(selectedCategory))
+                                if ([
+                                  'Veg',
+                                  'Non-Veg',
+                                ].contains(selectedCategory))
                                   Row(
                                     children: [
                                       ChoiceChip(
                                         label: const Text("Mild 🌶"),
                                         selected: selectedSpice == "Mild",
-                                        onSelected: (_) => setState(() =>
-                                            itemSpiceLevels[item['name']] =
-                                                "Mild"),
+                                        onSelected: (_) => setState(
+                                          () => itemSpiceLevels[item['name']] =
+                                              "Mild",
+                                        ),
                                         selectedColor: Colors.orangeAccent,
                                       ),
                                       const SizedBox(width: 8),
                                       ChoiceChip(
                                         label: const Text("Medium 🌶🌶"),
                                         selected: selectedSpice == "Medium",
-                                        onSelected: (_) => setState(() =>
-                                            itemSpiceLevels[item['name']] =
-                                                "Medium"),
+                                        onSelected: (_) => setState(
+                                          () => itemSpiceLevels[item['name']] =
+                                              "Medium",
+                                        ),
                                         selectedColor: Colors.deepOrangeAccent,
                                       ),
                                       const SizedBox(width: 8),
                                       ChoiceChip(
                                         label: const Text("Spicy 🌶🌶🌶"),
                                         selected: selectedSpice == "Spicy",
-                                        onSelected: (_) => setState(() =>
-                                            itemSpiceLevels[item['name']] =
-                                                "Spicy"),
+                                        onSelected: (_) => setState(
+                                          () => itemSpiceLevels[item['name']] =
+                                              "Spicy",
+                                        ),
                                         selectedColor: Colors.redAccent,
                                       ),
                                     ],
@@ -291,11 +298,14 @@ class _MenuPageState extends State<MenuPage> {
                                     ),
                                     count == 0
                                         ? ElevatedButton(
-                                            onPressed: () => setState(() =>
-                                                itemCounts[item['name']] = 1),
+                                            onPressed: () => setState(
+                                              () =>
+                                                  itemCounts[item['name']] = 1,
+                                            ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color(0xFF625D9F),
+                                              backgroundColor: const Color(
+                                                0xFF625D9F,
+                                              ),
                                             ),
                                             child: const Text("Add"),
                                           )
@@ -308,16 +318,17 @@ class _MenuPageState extends State<MenuPage> {
                                                     itemCounts[item['name']] =
                                                         count - 1;
                                                   } else {
-                                                    itemCounts
-                                                        .remove(item['name']);
+                                                    itemCounts.remove(
+                                                      item['name'],
+                                                    );
                                                   }
                                                 }),
                                               ),
                                               Text(
                                                 '$count',
                                                 style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
                                               IconButton(
                                                 icon: const Icon(Icons.add),
@@ -347,12 +358,15 @@ class _MenuPageState extends State<MenuPage> {
                   backgroundColor: const Color(0xFF625D9F),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Text(
                   "Confirm Order",
                   style: GoogleFonts.poppins(
-                      color: Colors.white, fontWeight: FontWeight.w600),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),

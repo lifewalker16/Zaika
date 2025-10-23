@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
 
-  // Stream to fetch all orders in real-time
+  // Stream to fetch orders for the currently logged-in user
   Stream<QuerySnapshot> getOrdersStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // Return empty stream if no user logged in
+      return const Stream.empty();
+    }
+
     return FirebaseFirestore.instance
         .collection('orders')
+        .where('userId', isEqualTo: user.uid)
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
@@ -38,7 +46,7 @@ class OrdersPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text(
-          'All Orders',
+          'My Orders',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         backgroundColor: const Color(0xFF625D9F),
