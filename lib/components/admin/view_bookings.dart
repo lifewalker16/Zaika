@@ -13,10 +13,9 @@ class ViewBookingsPage extends StatelessWidget {
 
   Future<void> updateBookingStatus(String docId, String newStatus) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(docId)
-          .update({'status': newStatus});
+      await FirebaseFirestore.instance.collection('bookings').doc(docId).update(
+        {'status': newStatus},
+      );
     } catch (e) {
       debugPrint('Error updating booking: $e');
     }
@@ -24,8 +23,10 @@ class ViewBookingsPage extends StatelessWidget {
 
   Future<String> getUserName(String userId) async {
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         return data['name'] ?? 'No Name';
@@ -63,9 +64,7 @@ class ViewBookingsPage extends StatelessWidget {
         stream: getBookingsStream(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: Text('Error loading bookings.'),
-            );
+            return const Center(child: Text('Error loading bookings.'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -73,9 +72,7 @@ class ViewBookingsPage extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text('No bookings found.'),
-            );
+            return const Center(child: Text('No bookings found.'));
           }
 
           final bookings = snapshot.data!.docs;
@@ -100,36 +97,45 @@ class ViewBookingsPage extends StatelessWidget {
                 ),
                 elevation: 4,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Header Row
                       Row(
                         children: [
-                          const Icon(Icons.event_note,
-                              color: Color(0xFF6C5DD3), size: 40),
+                          const Icon(
+                            Icons.event_note,
+                            color: Color(0xFF6C5DD3),
+                            size: 40,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Booking ID: $bookingId',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                           Chip(
                             label: Text(
                               status.toUpperCase(),
                               style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.bold),
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             backgroundColor: getStatusColor(status),
                           ),
                         ],
                       ),
                       const Divider(height: 20, thickness: 1),
-                      
+
                       // Booking Info
                       Row(
                         children: [
@@ -189,7 +195,9 @@ class ViewBookingsPage extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -204,7 +212,9 @@ class ViewBookingsPage extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
                               ),
                             ),
                           ],

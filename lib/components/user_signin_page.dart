@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'choose_user_widget.dart';
 import 'user_signup_page.dart';
 import 'location.dart';
+import 'forgot_password.dart';
 
 class UserSignInPage extends StatefulWidget {
   const UserSignInPage({super.key});
@@ -156,7 +157,14 @@ class _UserSignInPageState extends State<UserSignInPage> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordPage(),
+                              ),
+                            );
+                          },
                           child: const Text(
                             'Forgot password?',
                             style: TextStyle(color: Color(0xFF8173C3)),

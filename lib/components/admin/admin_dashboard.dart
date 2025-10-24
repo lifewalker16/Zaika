@@ -92,7 +92,8 @@ class AdminDashboardPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ViewFeedbackPage(), // Navigate to feedback page
+                    builder: (context) =>
+                        const ViewFeedbackPage(), // Navigate to feedback page
                   ),
                 );
               },
@@ -152,7 +153,11 @@ class _DashboardButton extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+                size: 18,
+              ),
             ],
           ),
         ),

@@ -6,7 +6,10 @@ class ViewItemsPage extends StatelessWidget {
 
   Future<void> _deleteItem(String docId) async {
     try {
-      await FirebaseFirestore.instance.collection('food_items').doc(docId).delete();
+      await FirebaseFirestore.instance
+          .collection('food_items')
+          .doc(docId)
+          .delete();
       debugPrint('✅ Deleted item with ID: $docId');
     } catch (e) {
       debugPrint('❌ Error deleting item: $e');
@@ -74,20 +77,33 @@ class ViewItemsPage extends StatelessWidget {
                             height: 60,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                                const Icon(
+                                  Icons.fastfood,
+                                  size: 40,
+                                  color: Colors.grey,
+                                ),
                           ),
                         )
-                      : const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                      : const Icon(
+                          Icons.fastfood,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
                   title: Text(
                     data['name'] ?? 'Unnamed Item',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Category: ${data['category'] ?? 'N/A'}'),
                       Text('Price: ₹${data['price'] ?? '-'}'),
-                      Text('Prep Time: ${data['preparation_time'] ?? '-'} mins'),
+                      Text(
+                        'Prep Time: ${data['preparation_time'] ?? '-'} mins',
+                      ),
                     ],
                   ),
                   trailing: IconButton(

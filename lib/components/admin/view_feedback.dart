@@ -15,8 +15,10 @@ class ViewFeedbackPage extends StatelessWidget {
   // Function to get user name from userId
   Future<String> getUserName(String userId) async {
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         return data['name'] ?? 'No Name';
@@ -97,8 +99,10 @@ class ViewFeedbackPage extends StatelessWidget {
                 ),
                 elevation: 4,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -108,7 +112,11 @@ class ViewFeedbackPage extends StatelessWidget {
                           const CircleAvatar(
                             radius: 16,
                             backgroundColor: Color(0xFF8173C3),
-                            child: Icon(Icons.person, color: Colors.white, size: 18),
+                            child: Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           FutureBuilder<String>(
@@ -130,7 +138,9 @@ class ViewFeedbackPage extends StatelessWidget {
                                 return Text(
                                   userName,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 16),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 );
                               }
                             },
@@ -139,19 +149,26 @@ class ViewFeedbackPage extends StatelessWidget {
                           // Rating Tag
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.amber.shade100,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.star, size: 16, color: Colors.amber),
+                                const Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: Colors.amber,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   rating,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ],
                             ),
@@ -161,20 +178,24 @@ class ViewFeedbackPage extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       // Comment
-                      Text(
-                        comment,
-                        style: const TextStyle(fontSize: 15),
-                      ),
+                      Text(comment, style: const TextStyle(fontSize: 15)),
                       const SizedBox(height: 12),
 
                       // Timestamp
                       Row(
                         children: [
-                          const Icon(Icons.access_time, size: 18, color: Colors.grey),
+                          const Icon(
+                            Icons.access_time,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             formattedTime,
-                            style: const TextStyle(color: Colors.grey, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),

@@ -100,19 +100,6 @@ class AdminSignInPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
 
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'Forgot password?',
-                            style: TextStyle(color: Color(0xFF8173C3)),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
                       // Sign In Button
                       SizedBox(
                         width: double.infinity,

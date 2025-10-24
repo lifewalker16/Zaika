@@ -1,31 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ViewOrdersPage extends StatelessWidget {
   const ViewOrdersPage({super.key});
 
-  // Stream to fetch all orders in real-time
+  // Stream to fetch only the logged-in user's orders, sorted by timestamp
   Stream<QuerySnapshot> getOrdersStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Stream.empty(); // No user logged in
+    }
     return FirebaseFirestore.instance
         .collection('orders')
+        .where('userId', isEqualTo: user.uid)
         .orderBy('timestamp', descending: true)
         .snapshots();
-  }
-
-  // Function to get user name from userId
-  Future<String> getUserName(String userId) async {
-    try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(userId).get();
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>;
-        return data['name'] ?? 'No Name';
-      }
-      return 'User Not Found';
-    } catch (e) {
-      debugPrint('Error fetching user name: $e');
-      return 'Error';
-    }
   }
 
   // Function to format timestamp
@@ -48,16 +38,27 @@ class ViewOrdersPage extends StatelessWidget {
     }
   }
 
+  // Function to update order status
+  Future<void> updateOrderStatus(String docId, String newStatus) async {
+    try {
+      await FirebaseFirestore.instance.collection('orders').doc(docId).update({
+        'status': newStatus,
+      });
+    } catch (e) {
+      debugPrint('Error updating order: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text(
-          'View Orders',
+          'My Orders',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
-        backgroundColor: const Color(0xFF8173C3),
+        backgroundColor: const Color(0xFF625D9F),
         centerTitle: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -84,11 +85,18 @@ class ViewOrdersPage extends StatelessWidget {
               final doc = orders[index];
               final order = doc.data() as Map<String, dynamic>;
               final orderId = doc.id;
-              final items = List<Map<String, dynamic>>.from(order['items'] ?? []);
+              final items = List<Map<String, dynamic>>.from(
+                order['items'] ?? [],
+              );
               final totalAmount = order['totalAmount'] ?? 0;
-              final status = order['status'] ?? 'Unknown';
+              final status = (order['status'] ?? 'Unknown').toString();
+
+              // Hide rejected orders
+              if (status.toLowerCase() == 'rejected') {
+                return const SizedBox.shrink();
+              }
+
               final timestampField = order['timestamp'];
-              final userId = order['userId'] ?? 'N/A';
               final formattedTime = formatTimestamp(timestampField);
 
               return Card(
@@ -98,7 +106,10 @@ class ViewOrdersPage extends StatelessWidget {
                 ),
                 elevation: 4,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -106,54 +117,9 @@ class ViewOrdersPage extends StatelessWidget {
                       Text(
                         'Order ID: $orderId',
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // User name and status
-                      Row(
-                        children: [
-                          const Icon(Icons.person, size: 20),
-                          const SizedBox(width: 8),
-                          FutureBuilder<String>(
-                            future: getUserName(userId),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const Text('Loading user...');
-                              } else if (snapshot.hasError) {
-                                return const Text('Error');
-                              } else {
-                                final userName = snapshot.data ?? 'Unknown';
-                                return Text(userName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold));
-                              }
-                            },
-                          ),
-                          const Spacer(),
-                          // Status badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: status.toLowerCase() == 'pending'
-                                  ? Colors.orange.shade100
-                                  : (status.toLowerCase() == 'completed'
-                                      ? Colors.green.shade100
-                                      : Colors.red.shade100),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              status,
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: status.toLowerCase() == 'pending'
-                                      ? Colors.orange
-                                      : (status.toLowerCase() == 'completed'
-                                          ? Colors.green
-                                          : Colors.red)),
-                            ),
-                          ),
-                        ],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -183,12 +149,16 @@ class ViewOrdersPage extends StatelessWidget {
                           const Text(
                             'Total Amount',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           Text(
                             '₹$totalAmount',
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
@@ -197,14 +167,48 @@ class ViewOrdersPage extends StatelessWidget {
                       // Timestamp
                       Row(
                         children: [
-                          const Icon(Icons.access_time, size: 18, color: Colors.grey),
+                          const Icon(
+                            Icons.access_time,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             formattedTime,
-                            style: const TextStyle(color: Colors.grey, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
+
+                      const SizedBox(height: 12),
+
+                      // Accept / Reject buttons if status is Pending
+                      if (status.toLowerCase() == 'pending')
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () =>
+                                  updateOrderStatus(orderId, 'Completed'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                              ),
+                              child: const Text('Accept'),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  updateOrderStatus(orderId, 'Rejected'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text('Reject'),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
