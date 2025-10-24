@@ -13,7 +13,12 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   String selectedCategory = 'Non-Veg';
-  List<Map<String, dynamic>> fetchedItems = [];
+
+  // Keep all fetched items globally by id
+  Map<String, Map<String, dynamic>> allItems = {};
+  List<Map<String, dynamic>> displayedItems = [];
+
+  // Track quantities and spice levels by itemId
   Map<String, int> itemCounts = {};
   Map<String, String> itemSpiceLevels = {};
 
@@ -25,37 +30,41 @@ class _MenuPageState extends State<MenuPage> {
 
   Future<void> _fetchMenuItems() async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('food_items')
-          .get();
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('food_items').get();
 
-      List<Map<String, dynamic>> loadedItems = [];
+      Map<String, Map<String, dynamic>> newAllItems = {};
 
       for (var doc in querySnapshot.docs) {
         final menuData = doc.data()['menuItems'] as Map<String, dynamic>?;
         if (menuData != null) {
           menuData.forEach((key, value) {
-            if (value['category'] == selectedCategory) {
-              loadedItems.add({
-                'id': key,
-                'name': value['name'],
-                'price': value['price'],
-                'image_url': value['image_url'],
-                'description': value['description'] ?? '',
-                'preparation_time': value['preparation_time'] ?? 0,
-                'category': value['category'],
-              });
-            }
+            newAllItems[key] = {
+              'id': key,
+              'name': value['name'],
+              'price': value['price'],
+              'image_url': value['image_url'],
+              'description': value['description'] ?? '',
+              'preparation_time': value['preparation_time'] ?? 0,
+              'category': value['category'],
+            };
           });
         }
       }
 
       setState(() {
-        fetchedItems = loadedItems;
+        allItems = newAllItems;
+        _updateDisplayedItems();
       });
     } catch (e) {
       print("🔥 Error fetching menu items: $e");
     }
+  }
+
+  void _updateDisplayedItems() {
+    displayedItems = allItems.values
+        .where((item) => item['category'] == selectedCategory)
+        .toList();
   }
 
   Future<void> _placeOrder() async {
@@ -71,17 +80,19 @@ class _MenuPageState extends State<MenuPage> {
       List<Map<String, dynamic>> orderItems = [];
       double total = 0;
 
-      itemCounts.forEach((itemName, qty) {
-        final item = fetchedItems.firstWhere((it) => it['name'] == itemName);
-        orderItems.add({
-          'itemId': item['id'],
-          'name': item['name'],
-          'quantity': qty,
-          'price': item['price'],
-          'image_url': item['image_url'],
-          'spiceLevel': itemSpiceLevels[itemName] ?? '',
-        });
-        total += (item['price'] * qty);
+      itemCounts.forEach((itemId, qty) {
+        final item = allItems[itemId];
+        if (item != null) {
+          orderItems.add({
+            'itemId': item['id'],
+            'name': item['name'],
+            'quantity': qty,
+            'price': item['price'],
+            'image_url': item['image_url'],
+            'spiceLevel': itemSpiceLevels[itemId] ?? '',
+          });
+          total += (item['price'] * qty);
+        }
       });
 
       if (orderItems.isEmpty) {
@@ -98,7 +109,7 @@ class _MenuPageState extends State<MenuPage> {
         'items': orderItems,
         'totalAmount': total,
         'status': 'Pending',
-        'timestamp': FieldValue.serverTimestamp(), // server timestamp
+        'timestamp': FieldValue.serverTimestamp(),
       };
 
       await FirebaseFirestore.instance
@@ -159,7 +170,7 @@ class _MenuPageState extends State<MenuPage> {
                           selected: selectedCategory == cat,
                           onSelected: (_) => setState(() {
                             selectedCategory = cat;
-                            _fetchMenuItems();
+                            _updateDisplayedItems();
                           }),
                           selectedColor: const Color(0xFF625D9F),
                           labelStyle: TextStyle(
@@ -177,14 +188,14 @@ class _MenuPageState extends State<MenuPage> {
 
             // Menu List
             Expanded(
-              child: fetchedItems.isEmpty
+              child: displayedItems.isEmpty
                   ? const Center(child: Text("No items in this category."))
                   : ListView.builder(
-                      itemCount: fetchedItems.length,
+                      itemCount: displayedItems.length,
                       itemBuilder: (context, index) {
-                        final item = fetchedItems[index];
-                        final count = itemCounts[item['name']] ?? 0;
-                        final selectedSpice = itemSpiceLevels[item['name']];
+                        final item = displayedItems[index];
+                        final count = itemCounts[item['id']] ?? 0;
+                        final selectedSpice = itemSpiceLevels[item['id']];
 
                         return Card(
                           shape: RoundedRectangleBorder(
@@ -246,18 +257,14 @@ class _MenuPageState extends State<MenuPage> {
                                 const SizedBox(height: 10),
 
                                 // Spice level for Veg / Non-Veg
-                                if ([
-                                  'Veg',
-                                  'Non-Veg',
-                                ].contains(selectedCategory))
+                                if (['Veg', 'Non-Veg'].contains(selectedCategory))
                                   Row(
                                     children: [
                                       ChoiceChip(
                                         label: const Text("Mild 🌶"),
                                         selected: selectedSpice == "Mild",
                                         onSelected: (_) => setState(
-                                          () => itemSpiceLevels[item['name']] =
-                                              "Mild",
+                                          () => itemSpiceLevels[item['id']] = "Mild",
                                         ),
                                         selectedColor: Colors.orangeAccent,
                                       ),
@@ -266,8 +273,7 @@ class _MenuPageState extends State<MenuPage> {
                                         label: const Text("Medium 🌶🌶"),
                                         selected: selectedSpice == "Medium",
                                         onSelected: (_) => setState(
-                                          () => itemSpiceLevels[item['name']] =
-                                              "Medium",
+                                          () => itemSpiceLevels[item['id']] = "Medium",
                                         ),
                                         selectedColor: Colors.deepOrangeAccent,
                                       ),
@@ -276,8 +282,7 @@ class _MenuPageState extends State<MenuPage> {
                                         label: const Text("Spicy 🌶🌶🌶"),
                                         selected: selectedSpice == "Spicy",
                                         onSelected: (_) => setState(
-                                          () => itemSpiceLevels[item['name']] =
-                                              "Spicy",
+                                          () => itemSpiceLevels[item['id']] = "Spicy",
                                         ),
                                         selectedColor: Colors.redAccent,
                                       ),
@@ -287,8 +292,7 @@ class _MenuPageState extends State<MenuPage> {
 
                                 // Qty buttons
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       "Qty:",
@@ -299,8 +303,7 @@ class _MenuPageState extends State<MenuPage> {
                                     count == 0
                                         ? ElevatedButton(
                                             onPressed: () => setState(
-                                              () =>
-                                                  itemCounts[item['name']] = 1,
+                                              () => itemCounts[item['id']] = 1,
                                             ),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(
@@ -315,12 +318,10 @@ class _MenuPageState extends State<MenuPage> {
                                                 icon: const Icon(Icons.remove),
                                                 onPressed: () => setState(() {
                                                   if (count > 1) {
-                                                    itemCounts[item['name']] =
-                                                        count - 1;
+                                                    itemCounts[item['id']] = count - 1;
                                                   } else {
-                                                    itemCounts.remove(
-                                                      item['name'],
-                                                    );
+                                                    itemCounts.remove(item['id']);
+                                                    itemSpiceLevels.remove(item['id']);
                                                   }
                                                 }),
                                               ),
@@ -333,8 +334,7 @@ class _MenuPageState extends State<MenuPage> {
                                               IconButton(
                                                 icon: const Icon(Icons.add),
                                                 onPressed: () => setState(() {
-                                                  itemCounts[item['name']] =
-                                                      count + 1;
+                                                  itemCounts[item['id']] = count + 1;
                                                 }),
                                               ),
                                             ],

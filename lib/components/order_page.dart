@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'payment_page.dart'; // Make sure this is your import path
 
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
@@ -8,10 +9,7 @@ class OrdersPage extends StatelessWidget {
   // Stream to fetch orders for the currently logged-in user
   Stream<QuerySnapshot> getOrdersStream() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // Return empty stream if no user logged in
-      return const Stream.empty();
-    }
+    if (user == null) return const Stream.empty();
 
     return FirebaseFirestore.instance
         .collection('orders')
@@ -23,7 +21,6 @@ class OrdersPage extends StatelessWidget {
   // Function to format timestamp
   String formatTimestamp(dynamic timestampField) {
     if (timestampField == null) return 'Unknown Time';
-
     if (timestampField is Timestamp) {
       final date = timestampField.toDate();
       final day = date.day.toString().padLeft(2, '0');
@@ -145,7 +142,6 @@ class OrdersPage extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
                             children: [
-                              // Item image
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
@@ -166,7 +162,6 @@ class OrdersPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              // Item name x quantity
                               Expanded(
                                 child: Text(
                                   spice.isEmpty
@@ -177,12 +172,11 @@ class OrdersPage extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              // Price
                               Text('₹$price'),
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
 
                       const Divider(height: 20, thickness: 1),
 
@@ -226,6 +220,45 @@ class OrdersPage extends StatelessWidget {
                           ),
                         ],
                       ),
+
+                      // ✅ Pay Now button for completed orders
+                      if (status.toLowerCase() == 'completed')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PaymentQRCodePage(
+                                      upiId:
+                                          "ashtondsz03gec@okhdfcbank", // Replace with actual UPI ID
+                                      amount: totalAmount.toDouble(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                "Pay Now",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

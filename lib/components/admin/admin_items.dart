@@ -207,7 +207,7 @@ class _AddFoodItemPageState extends State<AddFoodItemPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       child: DropdownButtonFormField<String>(
-                        value: _selectedCategory,
+                        initialValue: _selectedCategory,
                         decoration: const InputDecoration(
                           labelText: 'Category',
                           border: InputBorder.none,

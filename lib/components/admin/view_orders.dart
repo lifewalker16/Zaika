@@ -138,7 +138,7 @@ class ViewOrdersPage extends StatelessWidget {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
 
                       const Divider(height: 20, thickness: 1),
 
